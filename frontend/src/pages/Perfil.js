@@ -1,106 +1,201 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { useAuth } from '../App';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Box, 
+  Chip,
+  Grid,
+  Avatar
+} from '@mui/material';
+import { 
+  Person,
+  Email,
+  Badge,
+  CalendarToday
+} from '@mui/icons-material';
 
 const Perfil = () => {
-  const [usuario, setUsuario] = useState({
-    nombre: '',
-    email: '',
-    apellido: '',
-    perfil: 'cliente',
-  });
+  const { user } = useAuth();
 
-  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+        <Typography>No hay información de usuario disponible</Typography>
+      </Box>
+    );
+  }
 
-  useEffect(() => {
-    if (user && user.id) {
-      axios.get(`http://localhost:3000/api/usuarios/${user.id}`)
-        .then(response => {
-          setUsuario(response.data);
-        })
-        .catch(error => console.error("Error fetching user:", error));
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'admin': return '#f44336';
+      case 'vendedor': return '#2196f3';
+      case 'cliente': return '#4caf50';
+      default: return '#757575';
     }
-  }, [user]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!usuario.nombre || !usuario.email) {
-      return alert('Por favor complete todos los campos.');
-    }
-
-    axios.put(`http://localhost:3000/api/usuarios/${user.id}`, usuario)
-      .then(() => {
-        alert('Perfil actualizado correctamente');
-      })
-      .catch(error => {
-        console.error("Error updating user:", error);
-        alert('Hubo un error al actualizar el perfil.');
-      });
   };
 
-  const handleChange = (e) => {
-    setUsuario({
-      ...usuario,
-      [e.target.name]: e.target.value
-    });
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'admin': return 'Administrador';
+      case 'vendedor': return 'Vendedor';
+      case 'cliente': return 'Cliente';
+      default: return role;
+    }
   };
 
   return (
-    <div className="perfil-container">
-      <h2>Perfil</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Nombre</label>
-          <input
-            type="text"
-            name="nombre"
-            value={usuario.nombre || ''}
-            onChange={handleChange}
-            placeholder="Ingresa tu nombre"
-            required
-          />
-        </div>
+    <Box sx={{ 
+      minHeight: '90vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      py: 4,
+      px: 2
+    }}>
+      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          textAlign="center" 
+          gutterBottom
+          sx={{ color: 'white', fontWeight: 'bold', mb: 4 }}
+        >
+          Mi Perfil
+        </Typography>
 
-        <div className="form-group">
-          <label>Apellido</label>
-          <input
-            type="text"
-            name="apellido"
-            value={usuario.apellido || ''}
-            onChange={handleChange}
-            placeholder="Ingresa tu apellido"
-            required
-          />
-        </div>
+        <Card sx={{ borderRadius: '20px', overflow: 'hidden' }}>
+          <Box sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            p: 4,
+            textAlign: 'center'
+          }}>
+            <Avatar
+              sx={{
+                width: 100,
+                height: 100,
+                mx: 'auto',
+                mb: 2,
+                bgcolor: 'white',
+                color: '#667eea',
+                fontSize: '3rem',
+                fontWeight: 'bold'
+              }}
+            >
+              {user.nombres?.charAt(0)}{user.apellido?.charAt(0)}
+            </Avatar>
+            
+            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 1 }}>
+              {user.nombres} {user.apellido}
+            </Typography>
+            
+            <Chip
+              label={getRoleLabel(user.perfil)}
+              sx={{
+                bgcolor: getRoleColor(user.perfil),
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                height: '32px'
+              }}
+            />
+          </Box>
 
-        <div className="form-group">
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={usuario.email || ''}
-            onChange={handleChange}
-            placeholder="Ingresa tu correo electrónico"
-            required
-          />
-        </div>
+          <CardContent sx={{ p: 4 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Person sx={{ color: '#667eea', mr: 2 }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Nombres
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold">
+                      {user.nombres || 'No especificado'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
 
-        <div className="form-group">
-          <label>Perfil</label>
-          <select
-            name="perfil"
-            value={usuario.perfil}
-            onChange={handleChange}
-            required
-          >
-            <option value="admin">Administrador</option>
-            <option value="vendedor">Vendedor</option>
-            <option value="cliente">Cliente</option>
-          </select>
-        </div>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Person sx={{ color: '#667eea', mr: 2 }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Apellido
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold">
+                      {user.apellido || 'No especificado'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
 
-        <button type="submit" className="btn-submit">Actualizar</button>
-      </form>
-    </div>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Email sx={{ color: '#667eea', mr: 2 }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Email
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold">
+                      {user.email}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Badge sx={{ color: '#667eea', mr: 2 }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      ID de Usuario
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold">
+                      #{user.idusuario}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <CalendarToday sx={{ color: '#667eea', mr: 2 }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Permisos del Rol
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      {user.perfil === 'admin' && (
+                        <>
+                          <Chip label="Gestión completa de usuarios" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                          <Chip label="Gestión de productos" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                          <Chip label="Registro de ventas" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                          <Chip label="Reportes y estadísticas" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                        </>
+                      )}
+                      {user.perfil === 'vendedor' && (
+                        <>
+                          <Chip label="Gestión de productos" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                          <Chip label="Registro de ventas" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                          <Chip label="Ver reportes de ventas" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                        </>
+                      )}
+                      {user.perfil === 'cliente' && (
+                        <>
+                          <Chip label="Ver catálogo de productos" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                          <Chip label="Realizar compras" variant="outlined" sx={{ mr: 1, mb: 1 }} />
+                        </>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Box>
+    </Box>
   );
 };
 

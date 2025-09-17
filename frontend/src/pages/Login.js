@@ -1,71 +1,131 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, TextField, Button, Typography, Box, Alert } from '@mui/material';
+import { useAuth } from '../App';
 import axios from 'axios';
-import '../styles/forms.css';
 
-function Login({ setUser }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const Login = () => {
+  const [formData, setFormData] = useState({
+    email: '',
+    clave: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/usuario/login`, { email, password });
-      const { token, perfil } = response.data;
-
-      localStorage.setItem('token', token);
-      localStorage.setItem('perfil', perfil);
-
-      if (perfil === 'admin') {
-        navigate('/admin');
-      } else if (perfil === 'vendedor') {
-        navigate('/vendedor');
-      } else {
-        navigate('/productos');
+      const response = await axios.post('http://localhost:5000/api/usuario/login', formData);
+      
+      if (response.data.success) {
+        login(response.data.user, response.data.token);
+        
+        // Redirigir según el perfil
+        switch (response.data.user.perfil) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'vendedor':
+            navigate('/vendedor');
+            break;
+          case 'cliente':
+            navigate('/productos');
+            break;
+          default:
+            navigate('/');
+        }
       }
     } catch (error) {
-      console.error('Error al iniciar sesión', error);
-      alert('Hubo un error al iniciar sesión. Por favor, intenta de nuevo.');
+      setError(error.response?.data?.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="form-container">
-      <form className="form" onSubmit={handleLogin}>
-        <h2>Iniciar Sesión</h2>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="80vh"
+    >
+      <Card sx={{ maxWidth: 400, width: '100%', mx: 2 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom textAlign="center">
+            Iniciar Sesión
+          </Typography>
+          
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-        <div className="input-group">
-          <label htmlFor="email">Correo Electrónico</label>
-          <input
-            type="email"
-            id="email"
-            placeholder="Ingrese su correo"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              margin="normal"
+              required
+              autoComplete="email"
+            />
+            
+            <TextField
+              fullWidth
+              label="Contraseña"
+              name="clave"
+              type="password"
+              value={formData.clave}
+              onChange={handleChange}
+              margin="normal"
+              required
+              autoComplete="current-password"
+            />
 
-        <div className="input-group">
-          <label htmlFor="password">Contraseña</label>
-          <input
-            type="password"
-            id="password"
-            placeholder="Ingrese su contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2, py: 1.5 }}
+              disabled={loading}
+            >
+              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            </Button>
 
-        <button type="submit" className="form-button">Iniciar Sesión</button>
-
-        <div className="form-footer">
-          <p className="forgot-password">¿Olvidaste tu contraseña? <a href="/recuperar">Recuperarla</a></p>
-          <p>No tienes cuenta? <a href="/registro">Regístrate aquí</a></p>
-        </div>
-      </form>
-    </div>
+            <Box textAlign="center">
+              <Typography variant="body2" color="text.secondary">
+                ¿No tienes cuenta?{' '}
+                <Button
+                  variant="text"
+                  onClick={() => navigate('/registro')}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Regístrate aquí
+                </Button>
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
-}
+};
 
 export default Login;

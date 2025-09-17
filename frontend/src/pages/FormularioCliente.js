@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -7,59 +7,22 @@ import {
   Button, 
   Typography, 
   Box, 
-  Alert,
-  MenuItem
+  Alert
 } from '@mui/material';
 import { Save, ArrowBack } from '@mui/icons-material';
 import axios from 'axios';
 
-const FormularioProducto = () => {
+const FormularioCliente = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const productId = searchParams.get('id');
   
   const [formData, setFormData] = useState({
     nombre: '',
-    categoria: '',
-    precio: '',
-    stock: ''
+    apellido: '',
+    email: '',
+    telefono: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const categorias = [
-    'Bebidas',
-    'Panadería', 
-    'Postres',
-    'Comidas',
-    'Snacks',
-    'Otros'
-  ];
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/productos');
-        const producto = response.data.find(p => p.idproducto === parseInt(productId));
-        if (producto) {
-          setFormData({
-            nombre: producto.nombre,
-            categoria: producto.categoria,
-            precio: producto.precio.toString(),
-            stock: producto.stock.toString()
-          });
-        }
-      } catch (error) {
-        setError('Error al cargar el producto');
-      }
-    };
-
-    if (productId) {
-      setIsEditing(true);
-      fetchProduct();
-    }
-  }, [productId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,16 +35,16 @@ const FormularioProducto = () => {
       setError('El nombre es obligatorio');
       return false;
     }
-    if (!formData.categoria) {
-      setError('La categoría es obligatoria');
+    if (!formData.apellido.trim()) {
+      setError('El apellido es obligatorio');
       return false;
     }
-    if (!formData.precio || parseFloat(formData.precio) <= 0) {
-      setError('El precio debe ser mayor a 0');
+    if (!formData.email.trim()) {
+      setError('El email es obligatorio');
       return false;
     }
-    if (!formData.stock || parseInt(formData.stock) < 0) {
-      setError('El stock debe ser 0 o mayor');
+    if (!formData.telefono.trim()) {
+      setError('El teléfono es obligatorio');
       return false;
     }
     return true;
@@ -97,28 +60,17 @@ const FormularioProducto = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers = { Authorization: `Bearer ${token}` };
       
-      const data = {
-        nombre: formData.nombre.trim(),
-        categoria: formData.categoria,
-        precio: parseFloat(formData.precio),
-        stock: parseInt(formData.stock)
-      };
-
-      if (isEditing) {
-        await axios.put(`http://localhost:5000/api/productos/${productId}`, data, { headers });
-      } else {
-        await axios.post('http://localhost:5000/api/productos', data, { headers });
-      }
+      await axios.post('http://localhost:5000/api/clientes', formData, { headers });
       
-      navigate('/listado-productos');
+      navigate(-1);
     } catch (error) {
-      console.error('Error:', error);
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
+      console.error('Error al crear cliente:', error);
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
       } else {
-        setError('Error al guardar el producto. Verifica la conexión con el servidor.');
+        setError('Error al crear el cliente. Verifica la conexión.');
       }
     } finally {
       setLoading(false);
@@ -137,7 +89,7 @@ const FormularioProducto = () => {
       }}
     >
       <Card sx={{ 
-        maxWidth: 600, 
+        maxWidth: 500, 
         width: '100%', 
         mx: 2,
         borderRadius: '20px',
@@ -147,7 +99,7 @@ const FormularioProducto = () => {
           <Box display="flex" alignItems="center" mb={3}>
             <Button
               startIcon={<ArrowBack />}
-              onClick={() => navigate('/listado-productos')}
+              onClick={() => navigate(-1)}
               sx={{ mr: 2 }}
             >
               Volver
@@ -162,7 +114,7 @@ const FormularioProducto = () => {
                 fontWeight: 'bold'
               }}
             >
-              {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
+              Nuevo Cliente
             </Typography>
           </Box>
 
@@ -175,62 +127,47 @@ const FormularioProducto = () => {
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Nombre del Producto"
+              label="Nombre"
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
               margin="normal"
               required
               disabled={loading}
-              placeholder="Ej: Café Espresso Premium"
             />
             
             <TextField
               fullWidth
-              select
-              label="Categoría"
-              name="categoria"
-              value={formData.categoria}
+              label="Apellido"
+              name="apellido"
+              value={formData.apellido}
               onChange={handleChange}
               margin="normal"
               required
               disabled={loading}
-            >
-              {categorias.map((categoria) => (
-                <MenuItem key={categoria} value={categoria}>
-                  {categoria}
-                </MenuItem>
-              ))}
-            </TextField>
+            />
 
             <TextField
               fullWidth
-              label="Precio"
-              name="precio"
-              type="number"
-              value={formData.precio}
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
               onChange={handleChange}
               margin="normal"
               required
               disabled={loading}
-              InputProps={{
-                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-              }}
-              inputProps={{ min: 0, step: 0.01 }}
             />
             
             <TextField
               fullWidth
-              label="Stock"
-              name="stock"
-              type="number"
-              value={formData.stock}
+              label="Teléfono"
+              name="telefono"
+              value={formData.telefono}
               onChange={handleChange}
               margin="normal"
               required
               disabled={loading}
-              inputProps={{ min: 0 }}
-              helperText="Cantidad de unidades disponibles"
             />
 
             <Button
@@ -248,10 +185,7 @@ const FormularioProducto = () => {
               disabled={loading}
               startIcon={<Save />}
             >
-              {loading 
-                ? (isEditing ? 'Actualizando...' : 'Creando...') 
-                : (isEditing ? 'Actualizar Producto' : 'Crear Producto')
-              }
+              {loading ? 'Creando Cliente...' : 'Crear Cliente'}
             </Button>
           </Box>
         </CardContent>
@@ -260,4 +194,4 @@ const FormularioProducto = () => {
   );
 };
 
-export default FormularioProducto;
+export default FormularioCliente;

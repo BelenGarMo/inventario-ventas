@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box, CircularProgress } from '@mui/material';
 import Navigation from './components/Navigation';
@@ -14,6 +14,7 @@ import FormularioVenta from './pages/FormularioVenta';
 import Productos from './pages/Productos';
 import Admin from './pages/Admin';
 import Vendedor from './pages/Vendedor';
+import FormularioCliente from './pages/FormularioCliente';
 import './styles/globalStyles.css';
 
 // Context de Autenticación
@@ -36,9 +37,15 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-    
+
     if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
     }
     setLoading(false);
   }, []);
@@ -109,9 +116,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   );
@@ -137,59 +142,67 @@ const AppContent = () => {
   return (
     <>
       <Navigation />
-      <Box component="main" sx={{ minHeight: '100vh', pt: 3 }}>
+      <Box component="main" sx={{ minHeight: '100vh', pt: 3, px: 3 }}>
         <Routes>
           <Route path="/" element={<Inicio />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
-          <Route 
-            path="/perfil" 
+          <Route
+            path="/perfil"
             element={
               <PageProtection>
                 <Perfil />
               </PageProtection>
-            } 
+            }
           />
           <Route path="/productos" element={<Productos />} />
-          <Route 
-            path="/listado-productos" 
+          <Route
+            path="/listado-productos"
             element={
               <PageProtection allowedRoles={['admin', 'vendedor']}>
                 <ListadoProductos />
               </PageProtection>
-            } 
+            }
           />
-          <Route 
-            path="/formulario-producto" 
+          <Route
+            path="/formulario-producto"
             element={
               <PageProtection allowedRoles={['admin', 'vendedor']}>
                 <FormularioProducto />
               </PageProtection>
-            } 
+            }
           />
-          <Route 
-            path="/formulario-venta" 
+          <Route
+            path="/formulario-venta"
             element={
               <PageProtection allowedRoles={['admin', 'vendedor']}>
                 <FormularioVenta />
               </PageProtection>
-            } 
+            }
           />
-          <Route 
-            path="/admin" 
+          <Route
+            path="/admin"
             element={
               <PageProtection allowedRoles={['admin']}>
                 <Admin />
               </PageProtection>
-            } 
+            }
           />
-          <Route 
-            path="/vendedor" 
+          <Route
+            path="/formulario-cliente"
+            element={
+              <PageProtection allowedRoles={['admin', 'vendedor']}>
+                <FormularioCliente />
+              </PageProtection>
+            }
+          />
+          <Route
+            path="/vendedor"
             element={
               <PageProtection allowedRoles={['vendedor']}>
                 <Vendedor />
               </PageProtection>
-            } 
+            }
           />
         </Routes>
       </Box>

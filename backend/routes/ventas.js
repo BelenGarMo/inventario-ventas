@@ -1,18 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { getVentas, crearVenta, actualizarVenta, eliminarVenta } = require('../controllers/ventaController');
-const { verifyToken, authorizeAdminOrSeller, authorizeAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, authorizeAdminOrSeller } = require('../middleware/authMiddleware');
+const ventaController = require('../controllers/ventaController');
 
-// Ruta para obtener todas las ventas (todos los usuarios pueden verlas)
-router.get('/', getVentas);
+// Ruta para obtener todas las ventas
+router.get('/', verifyToken, authorizeAdminOrSeller, ventaController.getVentas);
 
-// Ruta para crear una venta (solo admin o vendedor pueden crear)
-router.post('/', verifyToken, authorizeAdminOrSeller, crearVenta);
+// Ruta para crear una venta
+router.post('/', verifyToken, authorizeAdminOrSeller, ventaController.createVenta);
 
-// Ruta para actualizar una venta (solo admin o vendedor pueden actualizar)
-router.put('/:id', verifyToken, authorizeAdminOrSeller, actualizarVenta);
-
-// Ruta para eliminar una venta (solo admin puede eliminar)
-router.delete('/:id', verifyToken, authorizeAdmin, eliminarVenta);
+// Ruta para obtener ventas por vendedor
+router.get('/vendedor/:id', verifyToken, authorizeAdminOrSeller, ventaController.getVentasByVendedor);
 
 module.exports = router;
